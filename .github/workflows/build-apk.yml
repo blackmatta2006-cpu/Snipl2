@@ -3,9 +3,15 @@ name: Build Android Debug APK
 on:
   push:
     branches: [ "**" ]
+    tags: [ "**" ]
   pull_request:
     branches: [ "**" ]
+  release:
+    types: [ published, created ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -54,9 +60,32 @@ jobs:
           mkdir -p apk
           cp app/build/outputs/apk/debug/app-debug.apk apk/FiberGrid-Pro-debug.apk || cp app/build/outputs/apk/debug/*.apk apk/FiberGrid-Pro-debug.apk
 
-      - name: Upload Debug APK Artifact
+      - name: Upload Debug APK Artifact (Actions Tab)
         uses: actions/upload-artifact@v4
         with:
           name: FiberGrid-Pro-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
+
+      # Upload to GitHub Release Assets if this build is for a Release or Tag
+      - name: Upload APK to GitHub Release Assets
+        if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: apk/FiberGrid-Pro-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Automatic Rolling Release on default branch push or manual trigger
+      - name: Auto-Publish Latest Debug Release
+        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch') && github.event_name != 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v1.0-debug"
+          name: "FiberGrid Pro Debug APK (Latest)"
+          body: "Automatic build of FiberGrid Pro Debug APK ready for installation on Android."
+          prerelease: true
+          files: apk/FiberGrid-Pro-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
