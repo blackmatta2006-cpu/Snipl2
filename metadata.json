@@ -1,0 +1,6 @@
+{
+  "name": "FiberGrid Pro",
+  "description": "Next-gen OFC GIS mapping, OTDR cut finder bot, auto-drive GPS route surveyor, and 360° street view dispatch OS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
